@@ -1,0 +1,15 @@
+[remap]
+
+importer="bitmap"
+type="BitMap"
+path="res://.import/Node_Sprite.bmp-3f760340fa70b3754e17e4c1291afc87.res"
+
+[deps]
+
+source_file="res://Assets/Sprites/Node_Sprite.bmp"
+dest_files=[ "res://.import/Node_Sprite.bmp-3f760340fa70b3754e17e4c1291afc87.res" ]
+
+[params]
+
+create_from=0
+threshold=0.5

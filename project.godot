@@ -10,9 +10,19 @@ config_version=4
 
 _global_script_classes=[ {
 "base": "Node",
+"class": "NN_Agent",
+"language": "GDScript",
+"path": "res://Scripts/NN_Agent.gd"
+}, {
+"base": "Node",
 "class": "NN_Connection",
 "language": "GDScript",
 "path": "res://Scripts/NN_Connection.gd"
+}, {
+"base": "Node",
+"class": "NN_Connection_History",
+"language": "GDScript",
+"path": "res://Scripts/NN_Connection_History.gd"
 }, {
 "base": "Node",
 "class": "NN_Genome",
@@ -23,11 +33,25 @@ _global_script_classes=[ {
 "class": "NN_Node",
 "language": "GDScript",
 "path": "res://Scripts/NN_Node.gd"
+}, {
+"base": "Node",
+"class": "NN_Population",
+"language": "GDScript",
+"path": "res://Scripts/NN_Population.gd"
+}, {
+"base": "Node",
+"class": "NN_Species",
+"language": "GDScript",
+"path": "res://Scripts/NN_Species.gd"
 } ]
 _global_script_class_icons={
+"NN_Agent": "",
 "NN_Connection": "",
+"NN_Connection_History": "",
 "NN_Genome": "",
-"NN_Node": ""
+"NN_Node": "",
+"NN_Population": "",
+"NN_Species": ""
 }
 
 [application]

@@ -1,0 +1,39 @@
+[gd_scene load_steps=5 format=2]
+
+[ext_resource path="res://Scripts/Camera.gd" type="Script" id=1]
+[ext_resource path="res://Scripts/NN_Here.gd" type="Script" id=2]
+[ext_resource path="res://Scenes/UI.tscn" type="PackedScene" id=3]
+
+[sub_resource type="RectangleShape2D" id=1]
+extents = Vector2( 100, 100 )
+
+[node name="Canvas" type="Node2D"]
+show_behind_parent = true
+
+[node name="NN_Here" type="Node2D" parent="."]
+script = ExtResource( 2 )
+
+[node name="Camera" type="Camera2D" parent="."]
+position = Vector2( 512, 300 )
+z_index = -1
+current = true
+script = ExtResource( 1 )
+__meta__ = {
+"_edit_group_": true
+}
+
+[node name="Static_Layer" type="CanvasLayer" parent="Camera"]
+
+[node name="Camera_hitbox" type="Area2D" parent="Camera/Static_Layer"]
+show_behind_parent = true
+space_override = 4
+gravity = 0.0
+priority = 10.0
+
+[node name="Camera_collision" type="CollisionShape2D" parent="Camera/Static_Layer/Camera_hitbox"]
+shape = SubResource( 1 )
+
+[node name="Interface" parent="." instance=ExtResource( 3 )]
+
+[connection signal="item_rect_changed" from="Camera" to="Camera" method="_on_Camera_item_rect_changed"]
+[connection signal="input_event" from="Camera/Static_Layer/Camera_hitbox" to="Camera" method="_on_Camera_hitbox_input_event"]
