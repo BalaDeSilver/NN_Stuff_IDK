@@ -17,6 +17,7 @@ script = ExtResource( 2 )
 position = Vector2( 512, 300 )
 z_index = -1
 current = true
+editor_draw_limits = true
 script = ExtResource( 1 )
 __meta__ = {
 "_edit_group_": true

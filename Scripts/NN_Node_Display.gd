@@ -1,5 +1,7 @@
 extends Node2D
 
+# I promise my coding will improve with time.
+
 var ref_node : NN_Node = null
 var text_label : RichTextLabel = null
 
@@ -17,8 +19,6 @@ func _ready():
 
 func mount_string():
 	tooltip_text = "Node #" + str(ref_node.number)
-	for i in range(ref_node.output_connections.size()):
-		tooltip_text = tooltip_text + "\n Connected to Node #" + str(ref_node.output_connections[i].to_node.number) + " via connection #" + str(ref_node.output_connections[i].number)
 	tooltip_text = tooltip_text + "\nBelongs to Agent #" + str(ref_node.genome_ref.agent_ref.id)
 
 func set_canvas_location():
@@ -42,7 +42,7 @@ func _on_Node_Collision_button_up():
 	
 	divisions.resize(ref_node.genome_ref.layers)
 	for i in range(divisions.size()):
-		divisions[i] = Vector2((i * 128 + i * General_Manager.node_spacing.x), 0)
+		divisions[i] = Vector2((i * General_Manager.node_size.x + i * General_Manager.node_spacing.x), 0)
 	
 	position.x = divisions[ref_node.layer].x + ref_node.genome_ref.agent_ref.relative_position.x
 	ref_node.canvas_location = position
@@ -60,6 +60,6 @@ func _on_Node_Collision_gui_input(event):
 		position += event.relative
 		ref_node.canvas_location = position
 		General_Manager.node_moved(ref_node.genome_ref.agent_ref.id)
-		_render()
+		#_render()
 	elif (event.is_action_pressed("ui_click")):
 		General_Manager.element_clicked(ref_node.genome_ref, ref_node.number, 0)

@@ -1,87 +1,98 @@
 extends Node
 
+# The class for each genome in the NN.
+# This is the brain of each agent.
+
 class_name NN_Genome
 
-var agent_ref
-var genes : Array = [] #Connections
-var nodes : Array = [] #Nodes
-var inputs : int = 0 #How many input nodes
-var outputs : int = 0 #How many output nodes
-var layers : int = 2 #How many layers in the network
-var next_node : int = 0 #Meta variable
-var bias_node : int = 0 #Bias node
-var network : Array = [] #A list of the nodes in the order that they need to be considered in the NN
+var agent_ref # A reference upwards, to the agent
+var genes : Array = [] # Connections
+var nodes : Array = [] # Nodes
+var inputs : int = 0 # How many input nodes
+var outputs : int = 0 # How many output nodes
+var layers : int = 2 # How many layers in the network
+var next_node : int = 0 # Meta variable
+var bias_node : int = 0 # Bias node
+var network : Array = [] # A list of the nodes in the order that they need to be considered in the NN
 
+# The top left and bottom right corners of the genome display, inside its parent.
 var top_left = Vector2(INF, INF)
 var bottom_right = Vector2(-INF, -INF)
 
-#Constructor
-func _init(inp : int, out : int, clone : bool, agent) -> void:
+# Constructor
+func _init(inp : int, out : int, clone : bool, agent, innovation_history) -> void:
 	inputs = inp
 	outputs = out
 	agent_ref = agent
 	
 	if(!clone):
-		var local_next_connection_number = 0
+		var local_next_connection_number = agent_ref.pop_ref.next_connection_number
 		
-		#Creates input nodes
+		# Creates input nodes
 		for i in range(inputs):
 			nodes.append(NN_Node.new(self, i))
 			next_node += 1
 			nodes[i].layer = 0
 			add_child(nodes[i])
 		
-		#Creates output nodes
+		# Creates output nodes
 		for i in range(outputs):
 			nodes.append(NN_Node.new(self, inputs + i))
 			next_node += 1
 			nodes[inputs + i].layer = 1
 			add_child(nodes[inputs + i])
 		
-		#Creates bias node
+		# Creates bias node
 		nodes.append(NN_Node.new(self, next_node))
 		add_child(nodes[next_node])
 		bias_node = next_node
 		next_node += 1
 		nodes[bias_node].layer = 0
 		
-		#Connect inputs to outputs
+		# Connect inputs to outputs
 		for i in range(inputs):
 			for j in range(outputs):
-				genes.append(NN_Connection.new(local_next_connection_number, self, nodes[i], nodes[inputs + j], General_Manager.rng.randf_range(-1, 1), local_next_connection_number))
+				genes.append(NN_Connection.new(get_innovation_number(innovation_history, nodes[i], nodes[inputs + j]), self, nodes[i], nodes[inputs + j], General_Manager.rng.randf_range(-1, 1), local_next_connection_number))
 				local_next_connection_number += 1
-		#Connect bias
+		# Connect bias
 		for j in range(outputs):
-			genes.append(NN_Connection.new(local_next_connection_number, self, nodes[bias_node], nodes[inputs + j], General_Manager.rng.randf_range(-1, 1), local_next_connection_number))
+			genes.append(NN_Connection.new(get_innovation_number(innovation_history, nodes[bias_node], nodes[inputs + j]), self, nodes[bias_node], nodes[inputs + j], General_Manager.rng.randf_range(-1, 1), local_next_connection_number))
 			local_next_connection_number += 1
 		
 		for i in genes:
 			add_child(i)
 			pass
 		
-		if(agent_ref.pop_ref.next_connection_number.size() < agent_ref.id + 1):
-			agent_ref.pop_ref.next_connection_number.append(local_next_connection_number)
-		else:
-			agent_ref.pop_ref.next_connection_number[agent_ref.id] = local_next_connection_number
+		agent_ref.pop_ref.next_connection_number = local_next_connection_number
 
-#Returns the node with a matching number
-#Sometimes, nodes will not be in order
+
+# Returns the node with a matching number
+# Most of the time, nodes will not be in order
 func get_NN_node(num : int) -> NN_Node:
 	for i in nodes:
 		if(i.number == num):
 			return i
 	return null
 
-#Adds the connections' references between the nodes, so they can access each other during feed forward
+# Returns the connection with a matching number
+# Most of the time, nodes will not be in order
+func get_NN_conn(num : int) -> NN_Connection:
+	for i in genes:
+		if(i.number == num):
+			return i
+	return null
+
+# Adds the connections' references between the nodes, so they can access each other during feed forward
 func connect_nodes() -> void:
 	for i in nodes:
 		i.output_connections.clear()
+		i.input_connections.clear()
 	
 	for i in genes:
 		i.from_node.output_connections.append(i)
 		i.to_node.input_connections.append(i)
 
-#Processes the node output based on input
+# Processes the node output based on input
 func feed_forward(input_values : Array) -> Array:
 	for i in range(inputs):
 		nodes[i].output_value = input_values[i]
@@ -98,17 +109,18 @@ func feed_forward(input_values : Array) -> Array:
 	for i in outs:
 		i = nodes[inputs + i].output_value
 	return outs
-	
-#Sets up the NN as a list of nodes in the right order to be engaged
+
+# Sets up the NN as a list of nodes in the right order to be engaged
 func generate_network() -> void:
 	connect_nodes()
 	network = []
-	#For each layer, add the node in that layer, since layers cannot connect to themselves, there is no need to order the nodes within a layer.
-	for i in range(layers): #For each layer
-		for j in nodes: #For each node
-			if(j.layer == i): #If that node is in that layer
-				network.append(j)
+	# For each layer, add the node in that layer, since layers cannot connect to themselves, there is no need to order the nodes within a layer.
+	for i in range(layers): # For each layer
+		for j in nodes: # For each node
+			if(j.layer == i): # If that node is in that layer
+				network.append(j) # Add it to the list.
 
+# Checks to see if there are possible spots for a new connection
 func fully_connected():
 	var max_connections = 0
 	var nodes_in_layers = []
@@ -130,14 +142,16 @@ func fully_connected():
 		return true
 	return false
 
+# Checks to see if the random connection is actually any good
 func random_connection_nodes_are_shit(rand1 : int, rand2 : int):
 	if(nodes[rand1].layer == nodes[rand2].layer or nodes[rand1].is_connected_to(nodes[rand2])):
 		return true
 	return false
 
+# I still can't remember what an innovation history is, sorry
 func get_innovation_number(innovation_history : Array, from : NN_Node, to : NN_Node):
 	var isnew = true
-	var connection_innovation_number = agent_ref.pop_ref.next_connection_number[agent_ref.id]
+	var connection_innovation_number = agent_ref.pop_ref.next_connection_number
 	for i in innovation_history:
 		if(i.matches(self, from, to)):
 			isnew = false
@@ -150,10 +164,11 @@ func get_innovation_number(innovation_history : Array, from : NN_Node, to : NN_N
 			inno_numbers.append(i.innovation)
 		
 		innovation_history.append(NN_Connection_History.new(from.number, to.number, connection_innovation_number, inno_numbers))
-		agent_ref.pop_ref.next_connection_number[agent_ref.id] += 1
+		agent_ref.pop_ref.next_connection_number += 1
 	
 	return connection_innovation_number
 
+# Adds a random connection to the network
 func add_random_connection(innovation_history : Array):
 	if (fully_connected()):
 		return
@@ -175,6 +190,7 @@ func add_random_connection(innovation_history : Array):
 	self.add_child(genes.back())
 	connect_nodes()
 
+# Adds a random node to the network
 func add_random_node(innovation_history : Array):
 	if (genes.size() == 0):
 		add_random_connection(innovation_history)
@@ -212,8 +228,9 @@ func add_random_node(innovation_history : Array):
 		layers += 1
 	
 	connect_nodes()
-	return get_NN_node(new_node_no)
+	#return get_NN_node(new_node_no)
 
+# Mutates the network so it becomes The Hulk®
 func mutate(innovation_history : Array):
 	if (genes.size() == 0):
 		add_random_connection(innovation_history)
@@ -231,14 +248,16 @@ func mutate(innovation_history : Array):
 	if (rand < 0.02):
 		add_random_node(innovation_history)
 
+# Returns the index of a gene in the network that matches another gene for another agent
 func matching_gene(parent2, innovation_number : int):
 	var x = 0
 	while x < parent2.genes.size():
-		if (parent2.genes[x].innovation_number == innovation_number):
+		if (parent2.genes[x].innovation == innovation_number):
 			return x
 		x += 1
 	return -1
 
+# As the duplicate() function sucks in Godot, this is really necessary.
 func clone():
 	var clone = get_script().new(inputs, outputs, true)
 	
@@ -257,10 +276,14 @@ func clone():
 	
 	return clone
 
+# Sex 3: The Return of the Kink
 func crossover(parent2):
-	var child = get_script().new(inputs, outputs, true, agent_ref)
+	var child = get_script().new(inputs, outputs, true, agent_ref, null)
 	child.genes.clear()
 	child.nodes.clear()
+	child.layers = layers
+	child.next_node = next_node
+	child.bias_node = bias_node
 	
 	var child_genes = []
 	var is_enabled = []
@@ -287,11 +310,13 @@ func crossover(parent2):
 	
 	for i in nodes:
 		child.nodes.append(i.clone())
+		child.get_NN_node(i.number).genome_ref = child
 		child.add_child(child.nodes.back())
 	
 	for i in range(child_genes.size()):
-		child.genes.append(child_genes[i].clone())
+		child.genes.append(child_genes[i].clone(child.get_NN_node(child_genes[i].from_node.number), child.get_NN_node(child_genes[i].to_node.number), child))
 		child.genes[i].enabled = is_enabled[i]
+		#child.genes[i].genome_ref = child
 		child.add_child(child.genes.back())
 	
 	child.connect_nodes()

@@ -1,5 +1,8 @@
 extends Camera2D
 
+# The camera script also sucks.
+#Todo:Optimize the camera script
+
 var camera_hitbox_shape : CollisionShape2D = null
 var dragging : bool = false
 var mouse_relative_position : Vector2 = Vector2(0, 0)
@@ -22,26 +25,23 @@ func reposition_hitbox():
 func _on_Camera_hitbox_input_event(_viewport, event, _shape_idx):
 	if event is InputEventMouseButton:
 		if(event.is_action_pressed("ui_scroll_up")):
-			zoom /= 1.1
+			if(zoom.x >= General_Manager.max_min_zoom.y):
+				zoom /= 1.1
 		elif(event.is_action_pressed("ui_scroll_down")):
-			zoom *= 1.1
+			if(zoom.y <= General_Manager.max_min_zoom.x):
+				zoom *= 1.1
 		elif event.is_pressed():
 			dragging = true
 		else:
 			dragging = false
-		
-		if (zoom.x > 2.5937424601):
-			zoom = Vector2(2.5937424601, 2.5937424601)
-		elif (zoom.x < 0.38554328942953174736440364447886):
-			zoom = Vector2(0.38554328942953174736440364447886, 0.38554328942953174736440364447886)
-	
+
 	elif event is InputEventMouseMotion and dragging:
 		position -= event.relative * zoom.x
 		
-		if (position.x - screensize.x / 2 * zoom.x < limit_left):
-			position.x = limit_left + screensize.x / 2 * zoom.x
-		elif (position.x + screensize.x / 2 * zoom.x > limit_right):
+		if (position.x + screensize.x / 2 * zoom.x > limit_right):
 			position.x = limit_right - screensize.x / 2 * zoom.x
+		elif (position.x - screensize.x / 2 * zoom.x < limit_left):
+			position.x = limit_left + screensize.x / 2 * zoom.x
 		
 		if (position.y - screensize.y / 2 * zoom.y < limit_top):
 			position.y = limit_top + screensize.y / 2 * zoom.y

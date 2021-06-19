@@ -1,5 +1,8 @@
 extends Node
 
+# A class to store the history of past connections and define new ones.
+# It serves to group similar connections together.
+
 class_name NN_Connection_History
 
 var from_node : int = 0
@@ -8,7 +11,7 @@ var innovation : int = 0
 
 var innovation_numbers : Array = []
 
-#Constructor
+# Constructor
 func _init(from : int, to : int, inno : int, innos : Array):
 	from_node = from
 	to_node = to

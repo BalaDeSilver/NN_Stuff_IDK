@@ -1,5 +1,8 @@
 extends Node
 
+# The species class separates the population into species by similarity between them.
+#Todo:Revise the species class
+
 class_name NN_Species
 
 var agents : Array = []
@@ -13,7 +16,7 @@ const excess_coeff : float = 1.5
 const weight_diff_coeff : float = 1.0
 const compatibility_threshold : float = 1.3
 
-#Constructor
+# Constructor
 func _init(agent):
 	agents.append(agent)
 	best_fitness = agent.fitness

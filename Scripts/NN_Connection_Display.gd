@@ -23,14 +23,14 @@ func _ready():
 	call_deferred("_render")
 
 func mount_string():
-	tooltip_text += "Connection #" + str(ref_connection.number) + "\nFrom node #" + str(ref_connection.from_node.number) + "\nTo node #" + str(ref_connection.to_node.number) + "\nWeight :" + str(ref_connection.weight) + "\nBelongs to agent #" + str(ref_connection.genome_ref.agent_ref.id)
+	tooltip_text += "Connection #" + str(ref_connection.number) + "\nFrom node #" + str(ref_connection.from_node.number) + "\nTo node #" + str(ref_connection.to_node.number) + "\nWeight: " + str(ref_connection.weight) + "\nBelongs to agent #" + str(ref_connection.genome_ref.agent_ref.id)
 
 func _render():
 	connection_render.clear_points()
 	if(ref_connection.enabled):
-		var point_a = ref_connection.from_node.canvas_location + Vector2(64, 64)
-		var point_b = ref_connection.to_node.canvas_location + Vector2(64, 64)
-
+		var point_a = ref_connection.from_node.canvas_location + General_Manager.node_size / 2
+		var point_b = ref_connection.to_node.canvas_location + General_Manager.node_size / 2
+		
 		connection_render.add_point(point_a)
 		connection_render.add_point(point_b)
 		

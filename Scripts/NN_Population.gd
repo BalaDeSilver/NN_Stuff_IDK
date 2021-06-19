@@ -1,34 +1,48 @@
 extends Node
 
+# The class that holds all of the NN.
+# A population means a lot of agents doing whatever.
+
 class_name NN_Population
 
-var pop : Array = []
+var pop := [] # The actual population
 
 var best_agent
-var best_score : float = 0
-var gen : int = 0
-var innovation_history : Array = []
-var gen_agents : Array = []
-var species : Array = []
-var kill_stale : bool = false
+var best_score := 0.0
+var gen := 0
+var innovation_history := []
+var gen_agents := []
+var species := []
+var kill_stale := false
 
-var next_connection_number : Array = []
+var next_connection_number := 0
 
-var MASS_EXTINCTION : bool = false
+var MASS_EXTINCTION := false
 
-#Constructor
+# Constructor
 func _init(size : int):
 	for i in range(size):
+		#Todo:Actually make a variable input and output size
 		pop.append(NN_Agent.new(4, 4, false, self, i))
 		pop[i].brain.generate_network()
 		pop[i].brain.mutate(innovation_history)
 		add_child(pop[i])
 
+# Creates a new agent
+func add_agent():
+	pop.append(NN_Agent.new(4, 4, false, self, pop.size()))
+	pop.back().brain.generate_network()
+	pop.back().brain.mutate(innovation_history)
+	add_child(pop.back())
+	General_Manager.add_agent()
+
+#Todo:Actually normalize update_alive() and feed_forward()
 func update_alive():
 	for i in pop:
 		i.think()
 		i.update()
 
+# Sets the best agent on each species, based on score.
 func set_best_agent():
 	var temp_best = species[0].agents[0]
 	temp_best.gen = gen
@@ -37,6 +51,7 @@ func set_best_agent():
 		best_score = temp_best.fitness
 		best_agent = gen_agents.back()
 
+# Segregates all agents into species.
 func speciate():
 	for i in species:
 		i.actors.clear()
@@ -51,10 +66,12 @@ func speciate():
 		if (!species_found):
 			species.append(NN_Species.new(i))
 
+# Calculates the fitness of every agent.
 func calculate_fitness():
 	for i in pop:
 		i.calculate_fitness()
 
+# Sorts the species based on the score of each agent.
 func sort_species():
 	for i in species:
 		i.sort_species()
@@ -73,6 +90,7 @@ func sort_species():
 	
 	species = temp
 
+# Genocide all the stale species. I don't know if this is actually necessary.
 func kill_stale_species():
 	var i = 0
 	while (i < species.size()):
@@ -81,12 +99,14 @@ func kill_stale_species():
 			i -= 1
 		i += 1
 
+# Gets the average fitness.
 func get_avg_fitness_sum():
 	var average_sum = 0
 	for i in species:
 		average_sum += i.average_sum
 	return average_sum
 
+# Genocide all the species doing poorly, so we can Charles Darwin the population.
 func kill_bad_species():
 	var i = 0
 	var average_sum = get_avg_fitness_sum()
@@ -96,16 +116,21 @@ func kill_bad_species():
 			i -= 1
 		i += 1
 
+# Thanos snaps the population.
 func cull_species():
 	for i in species:
 		i.cull()
 		i.fitness_sharing()
 		i.set_average()
 
+# Genocides the population, but 5 of them.
 func mass_extinction():
 	for _i in range(5, species.size()):
+		species[5].queue_free()
+	while(species.size() > 5):
 		species.remove(5)
 
+# The actual Charles Darwin stuff.
 func natural_selection():
 	speciate()
 	calculate_fitness()
@@ -121,6 +146,8 @@ func natural_selection():
 	
 	var average_sum = get_avg_fitness_sum()
 	var children = []
+	
+	# It also makes the next generation, not all is war crimes and blood.
 	
 	for i in species:
 		children.append(i.champ.clone())
