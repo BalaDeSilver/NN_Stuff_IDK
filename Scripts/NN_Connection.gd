@@ -25,11 +25,11 @@ func _init(inno : int, genome, from, to, w : float, n : int):
 
 # Generates a random, brand new weight.
 func mutate_weight():
-	var rand2 = General_Manager.rng.randf()
+	var rand2 = genome_ref.agent_ref.pop_ref.rng.randf()
 	if(rand2 < 0.1):
-		weight = General_Manager.rng.randf_range(-1, 1)
+		weight = genome_ref.agent_ref.pop_ref.rng.randf_range(-1, 1)
 	else:
-		weight += General_Manager.rng.randfn() / 50
+		weight += genome_ref.agent_ref.pop_ref.rng.randfn() / 50
 		weight = clamp(weight, -1, 1)
 
 # As the duplicate() function sucks in Godot, this is really necessary.

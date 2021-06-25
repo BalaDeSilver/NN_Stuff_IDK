@@ -1,6 +1,6 @@
 extends Node
 
-# The species class separates the population into species by similarity between them.
+# The species class separates the population into species by similarities between them.
 #Todo:Revise the species class
 
 class_name NN_Species
@@ -102,7 +102,7 @@ func select_random_agent():
 	for i in agents:
 		fitness_sum += i.fitness
 	
-	var rand = General_Manager.rng.randf_range(0, fitness_sum)
+	var rand = agents[0].pop_ref.rng.randf_range(0, fitness_sum)
 	var running_sum = 0
 	
 	for i in agents:
@@ -114,7 +114,7 @@ func select_random_agent():
 
 func give_bebe(innovation_history : Array):
 	var bebe
-	if (General_Manager.rng.randf() < 0.25):
+	if (agents[0].pop_ref.rng.randf() < 0.25):
 		bebe = select_random_agent().clone()
 	else:
 		var parent1 = select_random_agent()

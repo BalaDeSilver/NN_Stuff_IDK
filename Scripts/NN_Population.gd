@@ -5,6 +5,8 @@ extends Node
 
 class_name NN_Population
 
+var rng = RandomNumberGenerator.new()
+
 var pop := [] # The actual population
 
 var best_agent
@@ -21,20 +23,25 @@ var MASS_EXTINCTION := false
 
 # Constructor
 func _init(size : int):
+	rng.randomize()
 	for i in range(size):
 		#Todo:Actually make a variable input and output size
-		pop.append(NN_Agent.new(4, 4, false, self, i))
+		pop.append(create_agent())
+		pop[i].id = i
 		pop[i].brain.generate_network()
 		pop[i].brain.mutate(innovation_history)
 		add_child(pop[i])
 
 # Creates a new agent
 func add_agent():
-	pop.append(NN_Agent.new(4, 4, false, self, pop.size()))
+	pop.append(create_agent())
+	pop.back().id = pop.size() - 1
 	pop.back().brain.generate_network()
 	pop.back().brain.mutate(innovation_history)
 	add_child(pop.back())
-	General_Manager.add_agent()
+
+func create_agent():
+	return NN_Agent.new(4, 4, false, self)
 
 #Todo:Actually normalize update_alive() and feed_forward()
 func update_alive():

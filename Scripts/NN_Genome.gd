@@ -52,11 +52,11 @@ func _init(inp : int, out : int, clone : bool, agent, innovation_history) -> voi
 		# Connect inputs to outputs
 		for i in range(inputs):
 			for j in range(outputs):
-				genes.append(NN_Connection.new(get_innovation_number(innovation_history, nodes[i], nodes[inputs + j]), self, nodes[i], nodes[inputs + j], General_Manager.rng.randf_range(-1, 1), local_next_connection_number))
+				genes.append(NN_Connection.new(get_innovation_number(innovation_history, nodes[i], nodes[inputs + j]), self, nodes[i], nodes[inputs + j], agent_ref.pop_ref.rng.randf_range(-1, 1), local_next_connection_number))
 				local_next_connection_number += 1
 		# Connect bias
 		for j in range(outputs):
-			genes.append(NN_Connection.new(get_innovation_number(innovation_history, nodes[bias_node], nodes[inputs + j]), self, nodes[bias_node], nodes[inputs + j], General_Manager.rng.randf_range(-1, 1), local_next_connection_number))
+			genes.append(NN_Connection.new(get_innovation_number(innovation_history, nodes[bias_node], nodes[inputs + j]), self, nodes[bias_node], nodes[inputs + j], agent_ref.pop_ref.rng.randf_range(-1, 1), local_next_connection_number))
 			local_next_connection_number += 1
 		
 		for i in genes:
@@ -173,11 +173,11 @@ func add_random_connection(innovation_history : Array):
 	if (fully_connected()):
 		return
 	
-	var random_node_01 = General_Manager.rng.randi_range(0, nodes.size() - 1)
-	var random_node_02 = General_Manager.rng.randi_range(0, nodes.size() - 1)
+	var random_node_01 = agent_ref.pop_ref.rng.randi_range(0, nodes.size() - 1)
+	var random_node_02 = agent_ref.pop_ref.rng.randi_range(0, nodes.size() - 1)
 	while (random_connection_nodes_are_shit(random_node_01, random_node_02)):
-		random_node_01 = General_Manager.rng.randi_range(0, nodes.size() - 1)
-		random_node_02 = General_Manager.rng.randi_range(0, nodes.size() - 1)
+		random_node_01 = agent_ref.pop_ref.rng.randi_range(0, nodes.size() - 1)
+		random_node_02 = agent_ref.pop_ref.rng.randi_range(0, nodes.size() - 1)
 	
 	if (nodes[random_node_01].layer > nodes[random_node_02]):
 		var temp = random_node_02
@@ -186,7 +186,7 @@ func add_random_connection(innovation_history : Array):
 	
 	var connection_innovation_number = get_innovation_number(innovation_history, nodes[random_node_01], nodes[random_node_02])
 	
-	genes.append(NN_Connection.new(connection_innovation_number, self, nodes[random_node_01], nodes[random_node_02], General_Manager.rng.randf(-1, 1), genes.size()))
+	genes.append(NN_Connection.new(connection_innovation_number, self, nodes[random_node_01], nodes[random_node_02], agent_ref.pop_ref.rng.randf(-1, 1), genes.size()))
 	self.add_child(genes.back())
 	connect_nodes()
 
@@ -196,9 +196,9 @@ func add_random_node(innovation_history : Array):
 		add_random_connection(innovation_history)
 		return
 	
-	var random_connection = General_Manager.rng.randi_range(0, genes.size() - 1)
+	var random_connection = agent_ref.pop_ref.rng.randi_range(0, genes.size() - 1)
 	while (genes[random_connection].from_node == nodes[bias_node]):
-		random_connection = General_Manager.rng.randi_range(0, genes.size() - 1)
+		random_connection = agent_ref.pop_ref.rng.randi_range(0, genes.size() - 1)
 	
 	genes[random_connection].enabled = false
 	
@@ -235,16 +235,16 @@ func mutate(innovation_history : Array):
 	if (genes.size() == 0):
 		add_random_connection(innovation_history)
 	
-	var rand = General_Manager.rng.randf()
+	var rand = agent_ref.pop_ref.rng.randf()
 	if (rand < 0.8):
 		for i in genes:
 			i.mutate_weight()
 	
-	rand = General_Manager.rng.randf()
+	rand = agent_ref.pop_ref.rng.randf()
 	if (rand < 0.08):
 		add_random_connection(innovation_history)
 	
-	rand = General_Manager.rng.randf()
+	rand = agent_ref.pop_ref.rng.randf()
 	if (rand < 0.02):
 		add_random_node(innovation_history)
 
@@ -294,10 +294,10 @@ func crossover(parent2):
 		var parent2_gene = matching_gene(parent2, genes[i].innovation)
 		if (parent2_gene > -1):
 			if (!genes[i].enabled or !parent2.genes[parent2_gene].enabled):
-				if (General_Manager.rng.randf() < 0.75):
+				if (agent_ref.pop_ref.rng.randf() < 0.75):
 					set_enabled = false
 			
-			var rand = General_Manager.rng.randf()
+			var rand = agent_ref.pop_ref.rng.randf()
 			if (rand < 0.5):
 				child_genes.append(genes[i])
 			else:

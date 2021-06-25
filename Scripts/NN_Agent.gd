@@ -30,11 +30,11 @@ var genome_outputs := 0
 var relative_position := Vector2(0, 0)
 
 # Constructor
-func _init(inputs : int, outputs : int, clone : bool, pop, uid : int):
+func _init(inputs : int, outputs : int, clone : bool, pop):
 	genome_inputs = inputs
 	genome_outputs = outputs
 	pop_ref = pop
-	id = uid
+	
 	if (!clone):
 		brain = NN_Genome.new(genome_inputs, genome_outputs, false, self, pop_ref.innovation_history)
 		self.add_child(brain)
@@ -58,19 +58,24 @@ func update():
 # These should mostly be used as you exted this script via another script.
 func look():
 	pass
-#Todo:A better fitted scipt class to inherit
+# It updates, looks, thinks, then moves.
 func move():
 	pass
+# If it's inactive, it's dead.
+func dead():
+	for i in decision:
+			i = 0.0
 
 # What does a Neural Network do?
 # Think, anon, think!
 func think():
 	if (active):
+		update()
 		look()
 		decision = brain.feed_forward(vision)
+		move()
 	else:
-		for i in decision:
-			i = 0.0
+		dead()
 
 # This is a virtual function. Write another one to fit you better. Or not, who cares.
 func calculate_fitness():
@@ -79,10 +84,11 @@ func calculate_fitness():
 
 # Sex 2: Electric Boogaloo
 func crossover(player2):
-	var child = get_script().new(genome_inputs, genome_outputs, true, pop_ref, pop_ref.pop.size())
+	var child = get_script().new(genome_inputs, genome_outputs, true, pop_ref)
 	child.brain = brain.crossover(player2.brain)
+	child.id = pop_ref.pop.size()
 	child.add_child(child.brain)
 	child.brain.agent_ref = child
-	#child.brain.generate_network()
+	child.brain.generate_network()
 	return child
 	

@@ -3,32 +3,40 @@ extends CanvasLayer
 # This is the interface script and doesn't carry a lot about the NN itself.
 # Expect messy code here.
 #Todo:Improve the tooltip system
-var tooltip : PanelContainer = null
+var tooltip : PopupPanel = null
 var tooltip_label : RichTextLabel = null
 var margin_container : MarginContainer = null
 var button_elements : Button = null
 var tabs : TabContainer = null
+var ng_interface : VBoxContainer = null
 
 var tool_scroll : ScrollContainer = null
 var node_scroll : ScrollContainer = null
 var conn_scroll : ScrollContainer = null
 
-const tool_button_name_array : Array = [
+const tool_menu_name_array := [
 	"Rand_Node"
 ]
+const tool_button_name_array := [
+	"New_Agent",
+	"Redraw",
+	"Save",
+	"Load",
+	"New_Game"
+]
 
-const node_label_name_array : Array = [
+const node_label_name_array := [
 	"Agent_ID",
 	"Node_Num",
 	"Layer"
 ]
-const node_button_name_array : Array = [
+const node_button_name_array := [
 	"Add_Connection",
 	"Remove_Connection",
 	"Crossover"
 ]
 
-const conn_label_name_array : Array = [
+const conn_label_name_array := [
 	"Agent_ID",
 	"Connection_Num",
 	"Connection_Inno",
@@ -37,15 +45,24 @@ const conn_label_name_array : Array = [
 	"Weight"
 ]
 
-var tool_button_array : Array = []
-var node_label_array : Array = []
-var node_button_array : Array = []
-var conn_label_array : Array = []
-var network_list : Array = []
+const dialogs_name_array := [
+	"Save_Game",
+	#"Confirm_Save",
+	"Load_Game",
+	"Confirm_Load"
+]
 
-var displayed_element : int = -1
-var displayed_element_number : int = -1
-var displayed_network : int = -1
+var tool_menu_array := []
+var tool_button_array := []
+var node_label_array := []
+var node_button_array := []
+var conn_label_array := []
+var dialogs_array := []
+var network_list := []
+
+var displayed_element := -1
+var displayed_element_number := -1
+var displayed_network := -1
 
 var node_container : VBoxContainer = null
 var node_template : HBoxContainer = null
@@ -53,11 +70,12 @@ var node_template : HBoxContainer = null
 var genome : NN_Genome = null
 
 func _ready():
-	tooltip = get_node("Hover_Tooltip")
-	tooltip_label = get_node("Hover_Tooltip/Tooltip_Label")
+	tooltip = get_node("Tooltip")
+	tooltip_label = get_node("Tooltip/Tooltip_Label")
 	margin_container = get_node("Screen_Margin")
 	button_elements = get_node("Screen_Margin/Container/Buttons/Elements/Button_Elements")
 	tabs = get_node("Screen_Margin/Container/Tabs/Tabs")
+	ng_interface = get_node("Screen_Margin/Game_Start")
 	
 	tool_scroll = get_node("Screen_Margin/Container/Tabs/Tabs/Tools/ScrollContainer")
 	node_scroll = get_node("Screen_Margin/Container/Tabs/Tabs/Nodes/ScrollContainer")
@@ -71,21 +89,48 @@ func _ready():
 	for i in conn_label_name_array:
 		conn_label_array.append(get_node("Screen_Margin/Container/Tabs/Tabs/Connection/ScrollContainer/Container/" + i + "/Right/LblRight"))
 	
+	for i in tool_menu_name_array:
+		tool_menu_array.append(get_node("Screen_Margin/Container/Tabs/Tabs/Tools/ScrollContainer/Container/" + i + "/Right/MnuRight"))
 	for i in tool_button_name_array:
-		tool_button_array.append(get_node("Screen_Margin/Container/Tabs/Tabs/Tools/ScrollContainer/Container/" + i + "/Right/MnuRight"))
+		tool_button_array.append(get_node("Screen_Margin/Container/Tabs/Tabs/Tools/ScrollContainer/Container/" + i + "/Right/BtnRight"))
+	
+	for i in dialogs_name_array:
+		dialogs_array.append(get_node("dlg" + i))
+	
+	for i in dialogs_array[0].get_vbox().get_children()[0].get_children():
+		if i is ToolButton:
+			if i.hint_tooltip == "Toggle the visibility of hidden files.":
+				i.free()
+				break
+	for i in dialogs_array[0].get_vbox().get_children()[0].get_children():
+		if i is Button:
+			if i.text == "Create Folder":
+				i.free()
+				break
+	for i in dialogs_array[0].get_vbox().get_children()[3].get_children():
+		if i is OptionButton:
+			i.get_popup().remove_item(1)
+			break
+	
+	for i in dialogs_array.back().get_vbox().get_children()[0].get_children():
+		if i is ToolButton:
+			if i.hint_tooltip == "Toggle the visibility of hidden files.":
+				i.free()
+				break
+	for i in dialogs_array.back().get_vbox().get_children()[3].get_children():
+		if i is OptionButton:
+			i.get_popup().remove_item(1)
+			break
 	
 	node_container = get_node("Screen_Margin/Container/Tabs/Tabs/Nodes/ScrollContainer/Container")
 	node_template = get_node("Screen_Margin/Container/Tabs/Tabs/Nodes/ScrollContainer/Container/Container_To_Clone")
 	
 	button_elements.visible = false
+	button_elements.get_parent().get_parent().visible = false
 	tooltip.visible = false
 	
-	var pop = General_Manager.population_ref
-	for i in pop.pop:
-		tool_button_array[0].get_popup().add_item(str(i.id))
-	tool_button_array[0].get_popup().connect("index_pressed", self, "_on_Button_Rand_Node_pressed")
-	
-	node_button_array[2].get_popup().connect("index_pressed", self, "_on_Button_Crossover_pressed")
+	tabs.visible = false
+	tabs.get_parent().size_flags_stretch_ratio = 0
 	
 	General_Manager.connect("change_tooltip_text", self, "change_tooltip_text")
 	General_Manager.connect("show_tooltip", self, "theres_a_tooltip")
@@ -99,6 +144,14 @@ func _ready():
 func _process(_delta):
 	if(tooltip.visible == true):
 		tooltip.rect_global_position = get_viewport().get_mouse_position() + Vector2(8, 8)
+
+func update_tools():
+	var pop = General_Manager.population_ref
+	for i in pop.pop:
+		tool_menu_array[0].get_popup().add_item(str(i.id))
+	tool_menu_array[0].get_popup().connect("index_pressed", self, "_on_Button_Rand_Node_pressed")
+	
+	node_button_array[2].get_popup().connect("index_pressed", self, "_on_Button_Crossover_pressed")
 
 func update_tab_content(net : NN_Genome, num : int, ele : int):
 	_on_Button_Elements_pressed((ele == displayed_element and net.agent_ref.id == displayed_network and num == displayed_element_number), false)
@@ -251,17 +304,47 @@ func _on_Button_Crossover_pressed(index):
 	General_Manager.add_agent()
 	General_Manager.redraw()
 	#General_Manager.population_ref.pop.back().brain.generate_network()
-	tool_button_array[0].get_popup().clear()
+	tool_menu_array[0].get_popup().clear()
 	for i in pop.pop:
-		tool_button_array[0].get_popup().add_item(str(i.id))
-	tool_button_array[0].get_popup().rect_size.y = 200
+		tool_menu_array[0].get_popup().add_item(str(i.id))
+	tool_menu_array[0].get_popup().rect_size.y = 200
 	update_tab_content(genome, displayed_element_number, displayed_element)
 
 func _on_Button_Rand_Agent_pressed():
 	var pop = General_Manager.population_ref
 	pop.add_agent()
+	General_Manager.add_agent()
 	General_Manager.redraw()
-	tool_button_array[0].get_popup().clear()
+	tool_menu_array[0].get_popup().clear()
 	for i in pop.pop:
-		tool_button_array[0].get_popup().add_item(str(i.id))
-	tool_button_array[0].get_popup().rect_size.y = 200
+		tool_menu_array[0].get_popup().add_item(str(i.id))
+	tool_menu_array[0].get_popup().rect_size.y = 200
+
+func _on_Button_Save_Game_pressed():
+	dialogs_array[0].popup_centered_ratio(0.5)
+	dialogs_array[0].invalidate()
+
+func _on_Save_Game_file_selected(path):
+	if(path.right(path.length() - 3) != ".NN"):
+		path += ".NN"
+	print(path)
+	General_Manager.save_game(path)
+
+func _on_Button_Load_Game_pressed():
+	dialogs_array[1].popup_centered_minsize(Vector2(400, 100))
+
+func _on_Load_Game_confirmed():
+	dialogs_array[2].popup_centered_ratio(0.5)
+	dialogs_array[2].invalidate()
+
+func _on_Confirm_Load_file_selected(path):
+	General_Manager.load_game(path)
+	#ng_interface.visible = false
+
+func _on_Button_New_Game_pressed():
+	General_Manager.new_NN()
+	button_elements.get_parent().get_parent().visible = true
+	ng_interface.visible = false
+
+func _on_Button_Redraw_pressed():
+	General_Manager.redraw()

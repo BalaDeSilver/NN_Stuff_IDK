@@ -9,6 +9,11 @@
 config_version=4
 
 _global_script_classes=[ {
+"base": "NN_Agent",
+"class": "Agente",
+"language": "GDScript",
+"path": "res://Scripts/My_Agent.gd"
+}, {
 "base": "Node",
 "class": "NN_Agent",
 "language": "GDScript",
@@ -43,15 +48,22 @@ _global_script_classes=[ {
 "class": "NN_Species",
 "language": "GDScript",
 "path": "res://Scripts/NN_Species.gd"
+}, {
+"base": "NN_Population",
+"class": "Pop",
+"language": "GDScript",
+"path": "res://Scripts/My_Population.gd"
 } ]
 _global_script_class_icons={
+"Agente": "",
 "NN_Agent": "",
 "NN_Connection": "",
 "NN_Connection_History": "",
 "NN_Genome": "",
 "NN_Node": "",
 "NN_Population": "",
-"NN_Species": ""
+"NN_Species": "",
+"Pop": ""
 }
 
 [application]
